@@ -4,7 +4,7 @@ import random
 
 
 class FullyConnectedGraphTensorGenerator:
-    def __init__(self, L=15, min_children=0, max_children=3, phys_dim=2, bond_size_rule="exponential", leaf_probability=0.3):
+    def __init__(self, L=15, min_children=0, max_children=3, phys_dim=2, bond_size_rule="exponential", leaf_probability=0.3, seed=None):
         """
         Générateur de graphes connectés de tenseurs avec des feuilles possibles.
 
@@ -14,6 +14,7 @@ class FullyConnectedGraphTensorGenerator:
         - phys_dim : Dimension physique des tenseurs
         - bond_size_rule : Règle de taille des liens ("fixed", "exponential", "logarithmic")
         - leaf_probability : Probabilité qu'un nœud soit une feuille (ajoutée après la connexion principale)
+        - seed : Valeur pour fixer le générateur aléatoire (assure la reproductibilité)
         """
         self.L = L
         self.min_children = min_children
@@ -21,7 +22,19 @@ class FullyConnectedGraphTensorGenerator:
         self.phys_dim = phys_dim
         self.bond_size_rule = bond_size_rule
         self.leaf_probability = leaf_probability
+        self.seed = seed
+
+        # Fixer la seed pour la reproductibilité
+        self.set_seed()
+
+        # Générer l'arbre avec la seed fixée
         self.children_map = self.generate_fully_connected_tree()
+
+    def set_seed(self):
+        """Fixe la seed des générateurs aléatoires pour assurer la reproductibilité."""
+        if self.seed is not None:
+            random.seed(self.seed)
+            np.random.seed(self.seed)
 
     def generate_fully_connected_tree(self):
         """Génère un arbre couvrant (spanning tree) assurant la connectivité."""
@@ -59,7 +72,7 @@ class FullyConnectedGraphTensorGenerator:
         if self.bond_size_rule == "fixed":
             return 2  # Taille constante pour tous les liens
         elif self.bond_size_rule == "exponential":
-            return 2 ** (depth +1)  # Croissance exponentielle
+            return 2 ** (depth + 1)  # Croissance exponentielle
         elif self.bond_size_rule == "logarithmic":
             return max(2, int(np.log2(depth + 2)))  # Croissance logarithmique
         else:
@@ -84,16 +97,3 @@ class FullyConnectedGraphTensorGenerator:
         return qtn.TensorNetwork(tensors)
 
 
-# Exemples d'utilisation :
-if __name__ == "__main__":
-    print("Génération de graphes totalement connectés.\n")
-
-    # 🔹 Graphe avec 30% de feuilles et liens exponentiels
-    graph1 = FullyConnectedGraphTensorGenerator(L=15, min_children=0, max_children=3, bond_size_rule="exponential", leaf_probability=0.3).generate_graph()
-    graph1.draw(title="Graphe Connecté - Liens exponentiels", show_inds=True)
-
-    # 🔹 Graphe avec 50% de feuilles et des liens fixes
-    graph2 = FullyConnectedGraphTensorGenerator(L=20, min_children=0, max_children=4, bond_size_rule="fixed", leaf_probability=0.5).generate_graph()
-    graph2.draw(title="Graphe Connecté - Liens fixes", show_inds=True)
-
-    print("Graphes générés avec succès !")
