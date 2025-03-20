@@ -1,29 +1,24 @@
+
 import quimb as qu
-import quimb.linalg.base_linalg as ql
-import quimb.calc as qc
-import numpy as np
+import quimb.tensor as qtn
 
-# Définition de l'état de Bell |ψ⟩ = (|00⟩ + |11⟩) / √2
-psi = qu.ket([1, 0, 0, 1]) / 2**0.5
+# 🔹 Étape 1: Créer un état de Bell |Ψ-⟩ = (|01⟩ - |10⟩) / √2
+bell_psi_minus = qu.bell_state('psi-')
 
-print(psi)
+# 🔹 Étape 2: Construire la matrice densité ρ_AB = |Ψ-⟩⟨Ψ-|
+rho_AB = bell_psi_minus @ bell_psi_minus.H  # Produit extérieur
 
+# 🔹 Étape 3: Effectuer la trace partielle sur le qubit B pour obtenir ρ_A
+rho_A = qu.partial_trace(rho_AB, dims=[2, 2], keep=[0])  # Garde le premier qubit
+entropyA= qu.entropy_subsys(bell_psi_minus, dims= [2,2], sysa=[0])
 
-# 2. Reshape en matrice 2x2 pour le bipartitionnement (qubit A | qubit B)
-psi_mat = psi.reshape(2, 2)
+print("ENTROPY A EST", entropyA)
 
-print(psi_mat)
+# 🔹 Étape 4: Calculer l'entropie de von Neumann S(ρ_A)
+entropy_A = qu.entropy(rho_A)
 
-# 3. Décomposition SVD native de Quimb
-U, S, Vh = ql.svd(psi_mat)
-
-# 4. Les valeurs singulières S sont les coefficients de Schmidt
-schmidt_coeffs = [i for i in S]
-
-# 5. Calcul de l'entropie de Von Neumann avec quimb.calc.entropy
-entropy_vn = qc.entropy(schmidt_coeffs)  
-
-# 6. Affichage des résultats
-print("Coefficients de Schmidt (valeurs singulières) :", schmidt_coeffs)
-print("Entropie de Von Neumann :", entropy_vn)
+# 🔹 Affichage des résultats
+print("Matrice densité totale ρ_AB :\n", rho_AB)
+print("\nMatrice densité réduite ρ_A :\n", rho_A)
+print("\nEntropie d'intrication (S(ρ_A)) :", entropy_A)
 

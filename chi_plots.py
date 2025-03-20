@@ -67,11 +67,11 @@ for i in range(1,64,10):
 
 fig,axes = plt.subplots(2)
 
-axs[0].plot(result1)
-axs[1].plot(result2)
+axes[0].plot(result1)
+axes[1].plot(result2)
 
-axs[0].set_yscale('log')
-axs[1].set_yscale('log')
+axes[0].set_yscale('log')
+axes[1].set_yscale('log')
 
 plt.show()
 
