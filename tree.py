@@ -1,12 +1,5 @@
-import quimb as qu
-import quimb.tensor as qtn
-import numpy as np
-import re
-print('done')
-
-
 class Tree:
-    def __init__(self,root):
+    def __init__(self,root = None,matrix = None,max_bond = None,cutoff = None):
         self.nodes = {}
         self.network = None
         self.neutral = root
@@ -14,8 +7,11 @@ class Tree:
 
         self.nodes[root.index] = root
         self.network = root.tensor
+        self.cutoff = cutoff
+        self.max_bond = max_bond
 
         ####### utile dans les autres fonc
+    
     def to_str(self,node):
         return ''.join(node)
 
@@ -82,7 +78,6 @@ class Tree:
         array = np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]],dtype=float).reshape(2,2,2,2)
         self.apply_2qb_gate(i,j,gate_array = array)
 
-    
     ###### methodes
 
     def shift_neutral(self,i,j,side = 'right'):
@@ -113,7 +108,7 @@ class Tree:
         # 'apply' gate
         contracted_qubits = node_1.tensor @ node_2.tensor
 
-        split_tensor = contracted_qubits.split(left_inds=side_1,right_inds=side_2,method='svd',absorb=side,bond_ind=bond_ind)
+        split_tensor = contracted_qubits.split(left_inds=side_1,right_inds=side_2,method='svd',absorb=side,bond_ind=bond_ind,max_bond=self.max_bond, cutoff=self.cutoff)
         
         ind_1 = split_tensor.ind_map[side_1[0]].pop()
         tensor_1 = split_tensor.tensor_map[ind_1]
@@ -133,7 +128,6 @@ class Tree:
         self.network = self.network & node_1.tensor
         self.network = self.network & node_2.tensor
 
-
     def shift_along_path(self,node,root):
         path = self.get_path(node,root)
         # print('shifting along ',path)
@@ -148,6 +142,9 @@ class Tree:
             self.network = node.tensor
         else:
             self.network = self.network & node.tensor
+
+        if node.up is not None:
+            self.nodes[node.up].add_child(node.index)
 
         Id = np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]],dtype=float).reshape(2,2,2,2)
         self.apply_2qb_gate(i = node.index,j = node.up,gate_array=Id,already_linked=False)
@@ -217,7 +214,7 @@ class Tree:
 
         #change indexes to match gate indexes
 
-        gate = gate.split(left_inds=['out'+i,'nout'+i],method='svd',absorb='both',bond_ind=bond_ind)
+        gate = gate.split(left_inds=['out'+i,'nout'+i],method='svd',absorb='both',bond_ind=bond_ind)#,max_bond=self.max_bond, cutoff=self.cutoff)
 
         # 'apply' gate
         qubits = node_1.tensor & node_2.tensor
@@ -254,7 +251,6 @@ class Tree:
         # print('draw after last shift')
         # self.draw()
         
-    
     def draw(self):
         return self.network.draw(show_tags=True, show_inds='all',iterations=100, k=6)
 
@@ -263,17 +259,28 @@ class Tree:
         for i in range(len(path)-1):
             self.swap_adjacent(path[i],path[i+1])
 
+    def nb_coef(self):
+        nb = 0
+        for tensor in self.network:
+            nb += np.prod(tensor.shape)
+        return nb
+
 class Node:
-    def __init__(self,index,up,childrens,up_bdim,childrens_bdim):
+    def __init__(self,index,up,childrens = []):#,up_bdim,childrens_bdim):
         self.index = index
         self.up = up
-        self.childrens = childrens
-        self.up_bdim = up_bdim
-        self.childrens_bdim = childrens_bdim
+        # self.childrens = childrens
+        self.childrens = []
+        # self.up_bdim = up_bdim
+        # self.childrens_bdim = childrens_bdim
         self.init_tensor()
     
     def init_tensor(self):
         self.tensor = qtn.Tensor(data=np.array([1,0],dtype=complex),inds=['out'+self.index],tags = [self.index])
+
+    def add_child(self,index):
+        # print('added child ',index,' to ',self.index)
+        self.childrens.append(index)
 
     def reindex(self,dic):
         self.tensor.reindex_(dic)
@@ -285,6 +292,65 @@ class Node:
                 self.childrens.remove(i)
                 self.childrens.append(dic[i])
 
+
+def tree_from_matrix(matrix,root):
+    R0 = Node(index='R0',up = None)
+    tree = Tree(R0)
+
+    trad_dic = {0:'R0'}
+
+    #parcours d'arbre
+    queue = []
+    marked = []
+
+    queue.append(root)
+    marked.append(root)
+
+    # print('-------------------------')
+    # print('queue :',queue)
+    # print('marked :',marked)
+    # print('current dic :',trad_dic)
+
+    while len(queue) > 0:
+        # print('-------------------------')
+        # print('queue :',queue)
+        # print('marked :',marked)
+        # print('current dic :',trad_dic)
+
+        index = queue.pop(0)
+
+        #todo/action on node
+        # print('popped ',index)
+
+        #ajoute les enfants de index à la queue
+        enfants = [i for i in range(len(matrix[index])) if (matrix[index][i] != 0) and (i not in marked)]
+        nb_enfants = len(enfants)
+        # print('enfants :',enfants)
+
+        for i in enfants:
+            # print('child :',i)
+            if i not in marked:
+                # print('not marked')
+                queue.append(i)
+                marked.append(i)
+
+                #create Node
+                if nb_enfants == 1:
+                    # print(index,' has one child')
+                    node_index = trad_dic[index][:-1]+str(int(trad_dic[index][-1])+1)
+                if nb_enfants > 1:
+                    # print(index,' has ',nb_enfants,' childrens')
+                    node_index = trad_dic[index] + chr(ord('@')+enfants.index(i)+1)+str(1)
+                node = Node(index=node_index,up=trad_dic[index])
+                tree.add(node)
+                print('added node with index ',node_index,' and parent ',trad_dic[index],' to tree')
+
+                # print('parent ',trad_dic[index])
+                # print(' current child ',node_index)
+
+                trad_dic[i] = node_index
+
+    return tree
 
 print('start tests')
 for p in range(100):
