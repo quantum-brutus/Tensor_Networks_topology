@@ -83,14 +83,13 @@ def plot_connectivity_and_max_mst(circ, return_adjacency_matrix=False, plot = Tr
     # --- Matrice d’adjacence (optionnelle) ---
     if return_adjacency_matrix:
         # Tri pour garantir l'ordre canonique des nœuds
-        ordered_nodes = sorted(G.nodes)
-        adj_matrix = nx.to_numpy_array(G, nodelist=ordered_nodes, weight='weight')
+        ordered_nodes = sorted(mst.nodes)
+        adj_matrix = nx.to_numpy_array(mst, nodelist=ordered_nodes, weight='weight')
         return G, mst, adj_matrix
 
     return G, mst
 
-#G, mst, adj = plot_connectivity_and_max_mst(circuit, return_adjacency_matrix=True)
-#print("Matrice d'adjacence pondérée :\n", adj)
+# G, mst, adj = plot_connectivity_and_max_mst(circ, return_adjacency_matrix=True)
 
 
 def generate_random_entangled_circuits(num_qubits, num_layers, seed1=None, seed2=None, plot=False):
@@ -143,6 +142,7 @@ circ = generate_random_entangled_circuits(
 )
 
 G, mst, adj = plot_connectivity_and_max_mst(circ, return_adjacency_matrix=True)
+print("Matrice d'adjacence pondérée :\n", adj)
 
 # qc = qtn.Circuit(3)
 # gates = [
