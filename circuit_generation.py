@@ -40,15 +40,15 @@ def plot_connectivity_and_max_mst(circ, return_adjacency_matrix=False, plot = Fa
     G = nx.Graph()
     edge_weights = defaultdict(int)
 
-    # make sur all qubits are part of the graph/tree
-    for q1 in range(circ.N):
-        for q2 in range(circ.N):
-            edge_weights[(q1, q2)] += 1
-
     for gate in circ.gates:
         if len(gate.qubits) == 2:
             q1, q2 = sorted(gate.qubits)
             edge_weights[(q1, q2)] += 5
+
+    for q1 in range(circ.N):
+        for q2 in range(q1 + 1, circ.N):  # avoids self-loops and duplicates
+            if (q1, q2) not in edge_weights:
+                edge_weights[(q1, q2)] = 1
 
     for (q1, q2), weight in edge_weights.items():
         G.add_edge(q1, q2, weight=weight)
