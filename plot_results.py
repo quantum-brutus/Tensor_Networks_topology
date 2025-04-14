@@ -6,11 +6,14 @@ print(listdir())
 chdir('Tensor_Networks_topology')
 print(listdir())
 
-results = np.loadtxt('results_chi_1-25_N_10-200.txt')
-chi_range = range(1,25)
-N_gate_range = range(10,200,10)
+results = np.loadtxt('results_10-34_N_70-150.txt')
+
 
 N,CHI,RES_tree,RES_mps,MEM_tree,MEM_mps = zip(*results)
+
+chi_range = range(int(np.min(CHI)),int(np.max(CHI))+1,int(CHI[1]-CHI[0]))
+N_gate_range = range(int(np.min(N)),int(np.max(N))+1,int(N[len(chi_range)]-N[0]))
+
 # RES = np.array(RES).reshape(len(N),len(CHI))
 N = np.array(N).reshape(len(N_gate_range),len(chi_range))
 CHI = np.array(CHI).reshape(len(N_gate_range),len(chi_range))
@@ -24,88 +27,94 @@ MEM_diff = np.subtract(MEM_tree,MEM_mps)
 
 fig = plt.figure(figsize=(5,5))
 
-# --------------- Tree fidelity
-ax1 = fig.add_subplot(231, projection='3d')
-ax1.plot_surface(CHI, N, RES_tree, alpha = 0.7,cmap='bwr')
+elev = 40
+azim = 135
+rstride = 2
+cstride = 2
 
-# ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='bwr')
-# ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='bwr')
+# ---------------
+
+ax1 = fig.add_subplot(231, projection='3d')
+
+ax1.view_init(elev=elev, azim=azim)
+ax1.plot_surface(CHI, N, RES_tree, alpha = 0.7,cmap='coolwarm')
+ax1.plot_wireframe(CHI, N, RES_tree, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
+
+# ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='coolwarm')
+# ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='coolwarm')
 
 ax1.set_xlabel('Chi')
 ax1.set_ylabel('N')
-ax1.set_title('Tree Fidelity')
+ax1.set_title('fidelity tree')
 
 
-# --------------- MPS fidelity
+# ---------------
 ax2 = fig.add_subplot(232, projection='3d')
-ax2.plot_surface(CHI, N, RES_mps, alpha = 0.7,cmap='bwr')
 
-# ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='bwr')
-# ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='bwr')
+ax2.view_init(elev=elev, azim=azim)
+ax2.plot_surface(CHI, N, RES_mps, alpha = 0.7,cmap='coolwarm')
+ax2.plot_wireframe(CHI, N, RES_mps, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
 
-ax2.set_xlabel('Chi')
-ax2.set_ylabel('N')
-ax2.set_title('MPS fidelity')
-
-# --------------- Fidelity diff
-
-ax2 = fig.add_subplot(233, projection='3d')
-ax2.plot_surface(CHI, N, RES_diff, alpha = 0.7,cmap='bwr')
-
-# ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='bwr')
-# ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='bwr')
+# ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='coolwarm')
+# ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='coolwarm')
 
 ax2.set_xlabel('Chi')
 ax2.set_ylabel('N')
-ax2.set_title('Fidelity Difference (Tree-MPS)')
+ax2.set_title('fidelity mps')
 
-# --------------- Nb coef Tree
+# ---------------
 
-ax3 = fig.add_subplot(234, projection='3d')
-ax3.plot_surface(CHI,N ,MEM_tree ,alpha = 0.7,cmap='bwr')
+ax3 = fig.add_subplot(233, projection='3d')
+
+ax3.view_init(elev=elev, azim=azim)
+ax3.plot_surface(CHI, N, RES_diff, alpha = 0.7,cmap='coolwarm')
+ax3.plot_wireframe(CHI, N, RES_diff, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
+
+# ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='coolwarm')
+# ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='coolwarm')
 
 ax3.set_xlabel('Chi')
 ax3.set_ylabel('N')
-ax3.set_title('Nb of Coef Tree')
+ax3.set_title('fidelity diff')
 
-# ------------ Nb Coef MPS
+# ---------------
 
-ax4 = fig.add_subplot(235, projection='3d')
-ax4.plot_surface(CHI,N ,MEM_mps ,alpha = 0.7,cmap='bwr')
+ax4 = fig.add_subplot(234, projection='3d')
+
+ax4.view_init(elev=elev, azim=azim)
+ax4.plot_surface(CHI,N ,MEM_tree ,alpha = 0.7,cmap='coolwarm')
+ax4.plot_wireframe(CHI, N, MEM_tree, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
 
 ax4.set_xlabel('Chi')
 ax4.set_ylabel('N')
-ax4.set_title('Nb of Coef MPS')
+ax4.set_title('tree mem usage')
 
-# ------------ Nb of Coef Diff
+# ------------
 
-ax5 = fig.add_subplot(236, projection='3d')
-ax5.plot_surface(CHI,N ,MEM_diff ,alpha = 0.7,cmap='bwr')
+ax5 = fig.add_subplot(235, projection='3d')
+
+ax5.view_init(elev=elev, azim=azim)
+ax5.plot_surface(CHI,N ,MEM_mps ,alpha = 0.7,cmap='coolwarm')
+ax5.plot_wireframe(CHI, N, MEM_mps, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
 
 ax5.set_xlabel('Chi')
 ax5.set_ylabel('N')
-ax5.set_title('Nb of Coeff Difference (Tree-MPS)')
+ax5.set_title('mps mem usage')
 
-# # ------------ fidelity/Nb coef Tree
+# ------------
 
-# ax6 = fig.add_subplot(337, projection='3d')
-# ax6.plot_surface(CHI,MEM_tree ,RES_tree ,alpha = 0.7,cmap='bwr')
+ax6 = fig.add_subplot(236, projection='3d')
 
-# ax6.set_xlabel('Chi')
-# ax6.set_ylabel('Nb of Coef')
-# ax6.set_title('Fidelity by Nb of coef (Tree)')
-
-# # ------------ fidelity/Nb coef MPS
-
-# ax7 = fig.add_subplot(338, projection='3d')
-# ax7.plot_surface(CHI,MEM_mps ,RES_mps ,alpha = 0.7,cmap='bwr')
-
-# ax7.set_xlabel('Chi')
-# ax7.set_ylabel('Nb of Coef')
-# ax7.set_title('Fidelity by Nb of coef (MPS)')
+ax6.view_init(elev=elev, azim=azim)
+ax6.plot_surface(CHI,N ,MEM_diff ,alpha = 0.7,cmap='coolwarm')
+ax6.plot_wireframe(CHI, N, MEM_diff, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
 
 
-# --------
-# fig.subplots_adjust(wspace=0.4, hspace=0.4)
+ax6.set_xlabel('Chi')
+ax6.set_ylabel('N')
+ax6.set_title('mps mem usage')
+
+# -------
+
 plt.tight_layout()
 plt.show()
