@@ -62,9 +62,11 @@ tree_fidelity_values = []
 mps_fidelity_values = []
 diff_values = []
 chi_range = range(1,10)
-N_gate_range = range(10,200,30)
+N_gate_range = range(10,50,10)
 
 nb_moy = 10
+
+N_qubits = 10
 
 # for chi in chi_range:
 #     print(chi)
@@ -78,11 +80,10 @@ chi_tree_moy_dic = {}
 chi_mps_moy_dic = {}
 
 mem_moy_dic = {}
-  
-N_qubits = 15
 
 for N in tqdm(N_gate_range):
-    print(N)
+    print()
+    print('N :',N)
     for chi in chi_range:
         chi_mps_moy_dic[chi] = []
         chi_tree_moy_dic[chi] = []
@@ -147,3 +148,5 @@ ax2.plot_surface(CHI, N, RES_diff, alpha = 0.7,cmap='coolwarm')
 ax2.set_xlabel('Chi')
 ax2.set_ylabel('N')
 ax2.set_zlabel('fidelity diff')
+
+plt.show()
