@@ -1,0 +1,49 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from os import listdir,chdir
+
+print(listdir())
+chdir('Tensor_Networks_topology')
+print(listdir())
+
+results = np.loadtxt('results_chi_1-20_N_10-100.txt')
+chi_range = range(1,20)
+N_gate_range = range(10,100,10)
+
+N,CHI,RES_tree,RES_mps,MEM_tree,MEM_mps = zip(*results)
+# RES = np.array(RES).reshape(len(N),len(CHI))
+N = np.array(N).reshape(len(N_gate_range),len(chi_range))
+CHI = np.array(CHI).reshape(len(N_gate_range),len(chi_range))
+RES_tree = np.array(RES_tree).reshape(len(N_gate_range),len(chi_range))
+RES_mps = np.array(RES_mps).reshape(len(N_gate_range),len(chi_range))
+MEM_tree = np.array(MEM_tree).reshape(len(N_gate_range),len(chi_range))
+MEM_mps = np.array(MEM_mps).reshape(len(N_gate_range),len(chi_range))
+
+i = 8
+# plt.plot(MEM_tree[i],RES_tree[i],color='g')
+# plt.plot(MEM_mps[i],RES_mps[i],color='r')
+# plt.show()
+
+
+fig = plt.figure()
+gs = fig.add_gridspec(1, 9, hspace=0, wspace=0)
+axes = gs.subplots(sharex='col', sharey='row')
+fig.suptitle('Nb of Coef vs')
+
+# fig, axes = plt.subplots(1,9,sharey=True)
+
+for i in range(len(N.T[0])):
+    axes[i].plot(MEM_tree[i],RES_tree[i],color = 'g',label = 'Tree')
+    axes[i].plot(MEM_mps[i],RES_mps[i],color = 'r',label = 'Mps')
+
+for ax in axes.flat:
+    ax.set(xlabel='Nb Coef', ylabel='Fidelity')
+for ax in axes.flat:
+    ax.label_outer()
+
+plt.show()
+
+# print(N.T.shape)
+# print(CHI.shape)
+# print(MEM_tree.shape)
+# print(RES_tree.shape)
