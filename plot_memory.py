@@ -6,9 +6,9 @@ print(listdir())
 chdir('Tensor_Networks_topology')
 print(listdir())
 
-results = np.loadtxt('results_chi_1-20_N_10-100.txt')
-chi_range = range(1,20)
-N_gate_range = range(10,100,10)
+results = np.loadtxt('results_chi_1-25_N_10-200.txt')
+chi_range = range(1,25)
+N_gate_range = range(10,200,10)
 
 N,CHI,RES_tree,RES_mps,MEM_tree,MEM_mps = zip(*results)
 # RES = np.array(RES).reshape(len(N),len(CHI))
@@ -26,20 +26,26 @@ i = 8
 
 
 fig = plt.figure()
-gs = fig.add_gridspec(1, 9, hspace=0, wspace=0)
+gs = fig.add_gridspec(1, len(N.T[0]), hspace=0, wspace=0)
 axes = gs.subplots(sharex='col', sharey='row')
-fig.suptitle('Nb of Coef vs')
+fig.suptitle('Fidelity by Nb of Coef for different number of Gates')
+fig.supxlabel('Nb Coef')
+fig.supylabel('Fidelity')
 
 # fig, axes = plt.subplots(1,9,sharey=True)
 
 for i in range(len(N.T[0])):
     axes[i].plot(MEM_tree[i],RES_tree[i],color = 'g',label = 'Tree')
     axes[i].plot(MEM_mps[i],RES_mps[i],color = 'r',label = 'Mps')
+    axes[i].set_title('N='+str(int(N.T[0][i])))
 
-for ax in axes.flat:
-    ax.set(xlabel='Nb Coef', ylabel='Fidelity')
+axes[-1].legend()
+# for ax in axes.flat:
+#     ax.set(xlabel='Nb Coef', ylabel='Fidelity')
 for ax in axes.flat:
     ax.label_outer()
+
+plt.tight_layout()
 
 plt.show()
 

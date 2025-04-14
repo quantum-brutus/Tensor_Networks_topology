@@ -6,9 +6,9 @@ print(listdir())
 chdir('Tensor_Networks_topology')
 print(listdir())
 
-results = np.loadtxt('results_chi_1-20_N_10-100.txt')
-chi_range = range(1,20)
-N_gate_range = range(10,100,10)
+results = np.loadtxt('results_chi_1-25_N_10-200.txt')
+chi_range = range(1,25)
+N_gate_range = range(10,200,10)
 
 N,CHI,RES_tree,RES_mps,MEM_tree,MEM_mps = zip(*results)
 # RES = np.array(RES).reshape(len(N),len(CHI))
