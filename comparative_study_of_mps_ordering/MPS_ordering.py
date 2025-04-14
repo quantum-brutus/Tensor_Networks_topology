@@ -1,4 +1,5 @@
 import networkx as nx
+import pulp
 
 def greedy_weighted_linear_arrangement(G):
     nodes = list(G.nodes())
@@ -49,10 +50,7 @@ def local_greedy_swap(G, ordering, max_iter=100):
     return best_order, best_cost
 
 
-import pulp
-import networkx as nx
-
-def solve_mwla_ilp(G, timeout=60):
+def solve_mwla_ilp(G, timeout=10):
     import time
     nodes = list(G.nodes)
     n = len(nodes)
@@ -78,7 +76,7 @@ def solve_mwla_ilp(G, timeout=60):
 
     # Solve with timeout
     start = time.time()
-    solver = pulp.PULP_CBC_CMD(msg=1, timeLimit=timeout)
+    solver = pulp.PULP_CBC_CMD(msg=0, timeLimit=timeout)
     prob.solve(solver)
     elapsed = time.time() - start
 
@@ -122,12 +120,12 @@ import random
 
 
 # Création du graphe 15 qubits
-random.seed(42)
+random.seed(402)
 G = nx.Graph()
-qubits = [f"q{i}" for i in range(15)]
+qubits = [i for i in range(15)]
 G.add_nodes_from(qubits)
 
-for _ in range(30):
+for _ in range(20):
     u, v = random.sample(qubits, 2)
     if G.has_edge(u, v):
         continue
@@ -135,17 +133,114 @@ for _ in range(30):
 
 
 # 1. Ordre greedy
+
+import time
+
+# 1. Greedy
+start = time.time()
 initial_order = greedy_weighted_linear_arrangement(G)
+greedy_time = time.time() - start
+print("Temps d'exécution de l'algorithme greedy :", greedy_time)
 initial_cost = compute_total_cost(G, initial_order)
+
+
 print("Ordre greedy :", initial_order)
 print("Coût initial :", initial_cost)
 
 # 2. Optimisation locale
+# 2. Local Swap
+start = time.time()
 final_order, final_cost = local_greedy_swap(G, initial_order)
+local_time = time.time() - start
+
+print("Temps d'exécution de l'optimisation locale :", local_time)
 print("Ordre optimisé :", final_order)
 print("Coût optimisé :", final_cost)
 
 # 3. ILP
-ordering, cost, duration = solve_mwla_ilp(G)
-print("Ordre optimal ILP :", ordering)
+ilp_order, cost, ilp_time = solve_mwla_ilp(G, timeout=1)
+print("Ordre optimal ILP :", ilp_order)
 print("Coût total :", cost)
+
+
+
+import matplotlib.pyplot as plt
+
+def plot_ordered_layout(G, ordering, title, ax):
+    """
+    Affiche un graphe linéaire selon un ordre donné,
+    avec les arêtes et poids uniquement si elles existent dans G.
+    """
+    pos = {node: (i, 0) for i, node in enumerate(ordering)}
+    nx.draw_networkx_nodes(G, pos, ax=ax, node_color='lightblue', node_size=600)
+    nx.draw_networkx_labels(G, pos, ax=ax, font_size=8)
+
+    edge_labels = {}
+    edges_to_draw = []
+
+    for i in range(len(ordering) - 1):
+        u, v = ordering[i], ordering[i + 1]
+        if G.has_edge(u, v):
+            weight = G[u][v]['weight']
+            edges_to_draw.append((u, v))
+            edge_labels[(u, v)] = weight
+
+    # Tracer les arêtes valides
+    nx.draw_networkx_edges(G, pos, edgelist=edges_to_draw, ax=ax, edge_color='gray')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax, font_size=6)
+
+    ax.set_title(title)
+    ax.axis('off')
+
+
+def plot_graph_comparisons(G, initial_order, final_order, ilp_ordering):
+    fig, axs = plt.subplots(2, 2, figsize=(14, 8))
+
+    # 1. Graphe original
+    pos = nx.spring_layout(G, seed=42)
+    nx.draw(
+        G, pos, ax=axs[0, 0],
+        with_labels=True,
+        node_color='lightgreen',
+        edge_color='gray',
+        node_size=600,
+        font_size=8
+    )
+    edge_labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=axs[0, 0], font_size=6)
+    axs[0, 0].set_title("Graphe original (connectivité)")
+
+    # 2. Greedy
+    plot_ordered_layout(G, initial_order, f"Ordre greedy\nCoût: {compute_total_cost(G, initial_order)}", axs[0, 1])
+
+    # 3. Local Swap
+    plot_ordered_layout(G, final_order, f"Ordre local optimisé\nCoût: {compute_total_cost(G, final_order)}", axs[1, 0])
+
+    # 4. ILP
+    plot_ordered_layout(G, ilp_ordering, f"Ordre optimal ILP\nCoût: {compute_total_cost(G, ilp_ordering)}", axs[1, 1])
+
+    plt.tight_layout()
+    plt.show()
+
+plot_graph_comparisons(G, initial_order, final_order, ilp_order)
+
+def plot_solver_times(greedy_time, local_time, ilp_time):
+    import matplotlib.pyplot as plt
+
+    labels = ['Greedy', 'Local Swap', 'ILP']
+    times = [greedy_time, local_time, ilp_time]
+    colors = ['skyblue', 'orange', 'lightcoral']
+
+    plt.figure(figsize=(6, 4))
+    bars = plt.bar(labels, times, color=colors)
+    plt.ylabel("Temps (secondes)")
+    plt.title("Temps de calcul des solveurs")
+
+    # Ajouter les durées au-dessus des barres
+    for bar, t in zip(bars, times):
+        plt.text(bar.get_x() + bar.get_width() / 2, t * 1.01, f"{t:.4f}s", ha='center', va='bottom', fontsize=9)
+
+    plt.tight_layout()
+    plt.show()
+
+plot_solver_times(greedy_time, local_time, ilp_time)
