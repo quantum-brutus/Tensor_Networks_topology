@@ -3,6 +3,7 @@ import quimb.tensor as qtn
 import numpy as np
 import networkx as nx
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 
 def generate_semi_random_entangled_circuits(num_qubits, num_layers, seed = None, plot = False):
