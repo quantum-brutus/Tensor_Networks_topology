@@ -155,3 +155,26 @@ def generate_random_circuit(num_qubits,num_gates,seed1=None,seed2=None,plot=Fals
     if plot:
         circ.psi.draw(color=['PSI0', 'RX', 'CX'],iterations=100, k=6)
     return circ
+
+from qiskit import QuantumCircuit
+from qiskit.visualization import plot_circuit_layout, circuit_drawer
+import matplotlib.pyplot as plt
+
+def convert_and_draw_quimb_circuit(circ_qtn):
+    num_qubits = circ_qtn.N
+    qc = QuantumCircuit(num_qubits)
+
+    for gate in circ_qtn.gates:
+        tags = gate.tag
+        if tags == 'RX':
+            theta = gate.params[0]
+            qc.rx(theta, gate.qubits[0])
+        elif tags == 'CNOT' or tags == 'CX':
+            qc.cx(gate.qubits[0], gate.qubits[1])
+
+    qc.draw('mpl')  # ou 'text' pour terminal
+    plt.show()
+
+# # Utilisation :
+# circ = generate_random_circuit(4, 6)
+# convert_and_draw_quimb_circuit(circ)

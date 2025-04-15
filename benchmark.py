@@ -91,6 +91,7 @@ for N in tqdm(N_gate_range):
 
     for i in range(nb_moy):
         circ = generate_random_circuit(num_qubits=N_qubits,num_gates=N,plot=False)
+        #convert_and_draw_quimb_circuit(circ)
 
         for chi in chi_range:
             tree_fidelity,mps_fidelity = test_tree_mps(circ = circ,n_qb=N_qubits,max_bond=chi,return_memory=False)
