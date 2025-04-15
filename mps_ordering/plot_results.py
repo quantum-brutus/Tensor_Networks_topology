@@ -3,13 +3,13 @@ import numpy as np
 from os import listdir,chdir
 
 print(listdir())
-chdir('Tensor_Networks_topology')
+chdir('Tensor_Networks_topology\\mps_ordering')
 print(listdir())
 
 results = np.loadtxt('results.txt')
 
 
-N,CHI,RES_tree,RES_mps,MEM_tree,MEM_mps = zip(*results)
+N,CHI,RES_tree,RES_mps,RES_omps,MEM_tree,MEM_mps,MEM_omps = zip(*results)
 
 chi_range = range(int(np.min(CHI)),int(np.max(CHI))+1,int(CHI[1]-CHI[0]))
 N_gate_range = range(int(np.min(N)),int(np.max(N))+1,int(N[len(chi_range)]-N[0]))
@@ -19,11 +19,13 @@ N = np.array(N).reshape(len(N_gate_range),len(chi_range))
 CHI = np.array(CHI).reshape(len(N_gate_range),len(chi_range))
 RES_tree = np.array(RES_tree).reshape(len(N_gate_range),len(chi_range))
 RES_mps = np.array(RES_mps).reshape(len(N_gate_range),len(chi_range))
+RES_omps = np.array(RES_omps).reshape(len(N_gate_range),len(chi_range))
 MEM_tree = np.array(MEM_tree).reshape(len(N_gate_range),len(chi_range))
 MEM_mps = np.array(MEM_mps).reshape(len(N_gate_range),len(chi_range))
+MEM_omps = np.array(MEM_omps).reshape(len(N_gate_range),len(chi_range))
 
-RES_diff = np.subtract(RES_tree,RES_mps)
-MEM_diff = np.subtract(MEM_tree,MEM_mps)
+RES_diff = np.subtract(RES_tree,RES_omps)
+MEM_diff = np.subtract(MEM_tree,MEM_omps)
 
 fig = plt.figure(figsize=(5,5))
 
@@ -52,8 +54,8 @@ ax1.set_title('fidelity tree')
 ax2 = fig.add_subplot(232, projection='3d')
 
 ax2.view_init(elev=elev, azim=azim)
-ax2.plot_surface(CHI, N, RES_mps, alpha = 0.7,cmap='coolwarm')
-ax2.plot_wireframe(CHI, N, RES_mps, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
+ax2.plot_surface(CHI, N, RES_omps, alpha = 0.7,cmap='coolwarm')
+ax2.plot_wireframe(CHI, N, RES_omps, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
 
 # ax.contour(CHI, N, RES, zdir='x', offset=-15, cmap='coolwarm')
 # ax.contour(CHI, N, RES, zdir='y', offset=500, cmap='coolwarm')
@@ -94,8 +96,8 @@ ax4.set_title('tree mem usage')
 ax5 = fig.add_subplot(235, projection='3d')
 
 ax5.view_init(elev=elev, azim=azim)
-ax5.plot_surface(CHI,N ,MEM_mps ,alpha = 0.7,cmap='coolwarm')
-ax5.plot_wireframe(CHI, N, MEM_mps, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
+ax5.plot_surface(CHI,N ,MEM_omps ,alpha = 0.7,cmap='coolwarm')
+ax5.plot_wireframe(CHI, N, MEM_omps, rstride=rstride, cstride=cstride, color='black', linewidth=0.3)
 
 ax5.set_xlabel('Chi')
 ax5.set_ylabel('N')
