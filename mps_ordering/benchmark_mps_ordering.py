@@ -182,7 +182,7 @@ gate_times_mps_ordered_dic = {}
 gate_times_tree_dic = {}
 
 
-N_qubits = 3
+N_qubits = 7
 
 
 for N in tqdm(N_gate_range):
