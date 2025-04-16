@@ -8,13 +8,13 @@ from circuit_generation import *
 from tree_class import *
 from best_mps_ordering import local_greedy_swap, greedy_weighted_linear_arrangement, plot_graph_comparisons
 
-def test_tree_mps(circ,n_qb = 10,max_bond=None,return_memory=False, plot = False):
+def test_tree_mps(circ,n_qb = 10,max_bond=None,return_memory=False, plot = False, plot_tree = False):
 
     import time 
 
     start_time = time.time()
 
-    G, mst, adj = plot_connectivity_and_max_mst(circ, return_adjacency_matrix=True)
+    G, mst, adj = plot_connectivity_and_max_mst(circ, return_adjacency_matrix=True, plot=plot_tree)
 
     kruskal_time = time.time() - start_time
 
@@ -126,6 +126,28 @@ def replicate_circ(circ,tree,trad_dic):
             tree.apply_2qb_gate(i = qubit_1,j = qubit_2,gate_array=gate.build_array().reshape(2,2,2,2))
     return tree
 
+# --------------------------------------------------------------------------------------------------
+# DRAW THE CIRCUIT THE QISKIT WAY 
+
+from qiskit import QuantumCircuit
+from qiskit.visualization import plot_circuit_layout, circuit_drawer
+import matplotlib.pyplot as plt
+
+def convert_and_draw_quimb_circuit(circ_qtn):
+    num_qubits = circ_qtn.N
+    qc = QuantumCircuit(num_qubits)
+
+    for gate in circ_qtn.gates:
+        tags = gate.tag
+        if tags == 'RX':
+            theta = gate.params[0]
+            qc.rx(theta, gate.qubits[0])
+        elif tags == 'CNOT' or tags == 'CX':
+            qc.cx(gate.qubits[0], gate.qubits[1])
+
+    qc.draw('mpl')  # ou 'text' pour terminal
+    plt.show()
+    plt.close()
 
 # --------------------------------------------------------------------------------------------------
 
@@ -137,8 +159,11 @@ delta_mps = []
 
 # chi_range = range(1,40,3) 
 # N_gate_range = range(10,200,30)
+
 chi_range = range(1,40,3) 
-N_gate_range = range(10,200,30)
+
+N_gate_range = range(10,200,30) 
+
 nb_moy = 10
 
 results = []
@@ -159,6 +184,7 @@ gate_times_tree_dic = {}
 
 N_qubits = 3
 
+
 for N in tqdm(N_gate_range):
     for chi in chi_range:
         chi_mps_moy_dic[chi] = []
@@ -176,9 +202,10 @@ for N in tqdm(N_gate_range):
 
     for i in range(nb_moy):
         circ = generate_random_circuit(num_qubits=N_qubits,num_gates=N,plot=False)
+        #convert_and_draw_quimb_circuit(circ)
 
         for chi in chi_range:
-            tree_fidelity,mps_fidelity,omps_fidelity,mem_tree,mem_mps,mem_omps, kruskal_time, solver_time, mps_gate_time, mps_ordered_gate_time, tree_ordered_gate_time = test_tree_mps(circ = circ,n_qb=N_qubits,max_bond=chi,return_memory=True)
+            tree_fidelity,mps_fidelity,omps_fidelity,mem_tree,mem_mps,mem_omps, kruskal_time, solver_time, mps_gate_time, mps_ordered_gate_time, tree_ordered_gate_time = test_tree_mps(circ = circ,n_qb=N_qubits,max_bond=chi,return_memory=True, plot_tree=False)
             chi_tree_moy_dic[chi].append(tree_fidelity)
             chi_mps_moy_dic[chi].append(mps_fidelity)
             chi_omps_moy_dic[chi].append(omps_fidelity)
@@ -192,11 +219,21 @@ for N in tqdm(N_gate_range):
             gate_times_tree_dic[chi].append(tree_ordered_gate_time)
     
     for chi in chi_range:
-        results.append((N,chi,np.mean(chi_tree_moy_dic[chi]),np.mean(chi_mps_moy_dic[chi]), np.mean(chi_omps_moy_dic[chi]),np.mean(mem_tree_moy_dic[chi]),np.mean(mem_mps_moy_dic[chi]),np.mean(mem_omps_moy_dic[chi])))
+        results.append((N,chi,np.mean(chi_tree_moy_dic[chi]),
+                        np.mean(chi_mps_moy_dic[chi]),
+                        np.mean(chi_omps_moy_dic[chi]),
+                        np.mean(mem_tree_moy_dic[chi]),
+                        np.mean(mem_mps_moy_dic[chi]),
+                        np.mean(mem_omps_moy_dic[chi]), 
+                        np.mean(kruskal_times_dic[chi]),
+                        np.mean(heuristic_times_dic[chi]),
+                        np.mean(gate_times_mps_dic[chi]),
+                        np.mean(gate_times_mps_ordered_dic[chi]),
+                        np.mean(gate_times_tree_dic[chi])))
 np.savetxt('results.txt',results)
 
 
-N,CHI,RES_tree,RES_mps,RES_omps,MEM_tree,MEM_mps,MEM_omps = zip(*results)
+N,CHI,RES_tree,RES_mps,RES_omps,MEM_tree,MEM_mps,MEM_omps, time_kruskal, time_heuristic, time_gate_mps, time_gate_Omps, time_gate_tree = zip(*results)
 
 chi_range = range(int(np.min(CHI)),int(np.max(CHI))+1,int(CHI[1]-CHI[0]))
 N_gate_range = range(int(np.min(N)),int(np.max(N))+1,int(N[len(chi_range)]-N[0]))
@@ -320,7 +357,7 @@ ax.plot(chi_range, avg_heuristic, label='Heuristic MPS Ordering', marker='x')
 
 ax.set_xlabel('Chi')
 ax.set_ylabel('Average Solver Time (s)')
-ax.set_title('Solver Time Comparison')
+ax.set_title(f'Solver Time Comparison for {N_qubits} Qubits')
 ax.legend()
 ax.grid(True)
 
@@ -341,9 +378,56 @@ ax.plot(chi_range, avg_tree_apply, label='Tree apply_gate', marker='^')
 
 ax.set_xlabel('Chi')
 ax.set_ylabel('Average Apply Gate Time (s)')
-ax.set_title('Apply Gate Time Comparison')
+ax.set_title(f'Circuit Time Comparison for {N_qubits} Qubits')
 ax.legend()
 ax.grid(True)
+
+plt.tight_layout()
+plt.show()
+
+## 3D plots de temps de calcul pour les circuits
+
+fig = plt.figure(figsize=(18, 5))
+
+# Calcul des moyennes et écarts-types
+apply_mean_mps = np.array([[np.mean(gate_times_mps_dic[chi_range[j]]) for j in range(len(chi_range))] for i in range(len(N_gate_range))])
+apply_std_mps = np.array([[np.std(gate_times_mps_dic[chi_range[j]]) for j in range(len(chi_range))] for i in range(len(N_gate_range))])
+
+apply_mean_omps = np.array([[np.mean(gate_times_mps_ordered_dic[chi_range[j]]) for j in range(len(chi_range))] for i in range(len(N_gate_range))])
+apply_std_omps = np.array([[np.std(gate_times_mps_ordered_dic[chi_range[j]]) for j in range(len(chi_range))] for i in range(len(N_gate_range))])
+
+apply_mean_tree = np.array([[np.mean(gate_times_tree_dic[chi_range[j]]) for j in range(len(chi_range))] for i in range(len(N_gate_range))])
+apply_std_tree = np.array([[np.std(gate_times_tree_dic[chi_range[j]]) for j in range(len(chi_range))] for i in range(len(N_gate_range))])
+
+# Surface MPS
+ax1 = fig.add_subplot(131, projection='3d')
+ax1.plot_surface(CHI, N, apply_mean_mps, alpha=0.7, cmap='viridis', label='Mean MPS')
+ax1.plot_wireframe(CHI, N, apply_mean_mps + apply_std_mps, color='black', linewidth=0.3, alpha=0.4)
+ax1.plot_wireframe(CHI, N, apply_mean_mps - apply_std_mps, color='black', linewidth=0.3, alpha=0.4)
+ax1.set_title("MPS Apply Gate Time")
+ax1.set_xlabel("Chi")
+ax1.set_ylabel("N gates")
+ax1.set_zlabel("Time (s)")
+
+# Surface Ordered MPS
+ax2 = fig.add_subplot(132, projection='3d')
+ax2.plot_surface(CHI, N, apply_mean_omps, alpha=0.7, cmap='plasma')
+ax2.plot_wireframe(CHI, N, apply_mean_omps + apply_std_omps, color='black', linewidth=0.3, alpha=0.4)
+ax2.plot_wireframe(CHI, N, apply_mean_omps - apply_std_omps, color='black', linewidth=0.3, alpha=0.4)
+ax2.set_title("Ordered MPS Apply Gate Time")
+ax2.set_xlabel("Chi")
+ax2.set_ylabel("N gates")
+ax2.set_zlabel("Time (s)")
+
+# Surface Tree
+ax3 = fig.add_subplot(133, projection='3d')
+ax3.plot_surface(CHI, N, apply_mean_tree, alpha=0.7, cmap='cividis')
+ax3.plot_wireframe(CHI, N, apply_mean_tree + apply_std_tree, color='black', linewidth=0.3, alpha=0.4)
+ax3.plot_wireframe(CHI, N, apply_mean_tree - apply_std_tree, color='black', linewidth=0.3, alpha=0.4)
+ax3.set_title("Tree Apply Gate Time")
+ax3.set_xlabel("Chi")
+ax3.set_ylabel("N gates")
+ax3.set_zlabel("Time (s)")
 
 plt.tight_layout()
 plt.show()

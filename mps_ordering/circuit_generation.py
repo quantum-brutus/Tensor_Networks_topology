@@ -155,3 +155,6 @@ def generate_random_circuit(num_qubits,num_gates,seed1=None,seed2=None,plot=Fals
     if plot:
         circ.psi.draw(color=['PSI0', 'RX', 'CX'],iterations=100, k=6)
     return circ
+
+
+
