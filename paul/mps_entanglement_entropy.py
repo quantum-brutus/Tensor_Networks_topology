@@ -28,11 +28,11 @@ for bond_dim in bond_dims:
 plt.figure(figsize=(10, 6))
 
 for bond_dim, entropies in entropies_per_bond.items():
-    plt.plot(range(L), entropies, marker='o', linestyle='-', label=f"Bond Dim {bond_dim}")
+    plt.plot(range(L), entropies, marker='.', linestyle='-', label=f"Bond Dim {bond_dim}")
 
-plt.xlabel("Position du qubit")
+plt.xlabel("Position de la coupe")
 plt.ylabel("Entropie d'intrication")
-plt.title("Évolution de l'entropie d'intrication en fonction de la bond dimension")
+plt.title("Évolution de l'entropie d'intrication en fonction de la bond dimension et de la position de la partition dans un MPS aléatoire donné.")
 plt.legend()
 plt.grid()
 plt.show()
