@@ -117,6 +117,10 @@ def plot_graph_comparisons(G, initial_order, final_order):
     plt.tight_layout()
     plt.show()
 
+
+#------------------------------------  Pour tester le code  ------------------------------------
+
+
 # # Création du graphe 15 qubits
 # random.seed(400)
 # G = nx.Graph()

@@ -3,14 +3,14 @@ import numpy as np
 from os import listdir, chdir
 
 print(listdir())
-# chdir('Tensor_Networks_topology')  # adapte ce chemin si besoin
+# chdir('Tensor_Networks_topology')  # Chemin à adapter
 print(listdir())
 
 # Chargement
-results = np.loadtxt('results.txt')
+results = np.loadtxt('results.txt')  ##fichier texte à adapter
 
 # Extraction
-N, CHI, RES_tree, RES_mps, RES_mps_ordered = zip(*results)
+N, CHI, RES_tree, RES_mps, RES_mps_ordered = zip(*results)  ## à adapter selon le fichier
 
 # Reshape
 chi_range = range(1, 12)  # adapte si besoin

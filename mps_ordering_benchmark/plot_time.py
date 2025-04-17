@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Chargement des données
-results = np.loadtxt('results/results7qubits.txt')
+results = np.loadtxt('results/results7qubits.txt')  ## à adapter
 
 # Extraction des colonnes
 N, CHI, RES_tree, RES_mps, RES_omps, MEM_tree, MEM_mps, MEM_omps, \
-time_kruskal, time_heuristic, time_gate_mps, time_gate_omps, time_gate_tree = zip(*results)
+time_kruskal, time_heuristic, time_gate_mps, time_gate_omps, time_gate_tree = zip(*results) ## à adapter
 
 # Définition des plages
 chi_range = range(1, 40, 3)
