@@ -1,14 +1,25 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from os import listdir,chdir
+import pandas as pd
 
 print(listdir())
 chdir('Tensor_Networks_topology\\mps_ordering')
 print(listdir())
 
-results = np.loadtxt('results.txt')
+# results = np.loadtxt('results.txt')
 
-N,CHI,RES_tree,RES_mps,RES_omps,MEM_tree,MEM_mps,MEM_omps = zip(*results)
+# N,CHI,RES_tree,RES_mps,RES_omps,MEM_tree,MEM_mps,MEM_omps = zip(*results)
+df_results = pd.read_csv('results_df')
+
+N = df_results['N']
+CHI = df_results['chi']
+RES_tree = df_results['f_tree']
+RES_mps = df_results['fidelity_mps']
+RES_omps = df_results['fidelity_omps']
+MEM_tree = df_results['mem_tree']
+MEM_mps = df_results['mem_mps']
+MEM_omps = df_results['mem_omps']
 
 chi_range = range(int(np.min(CHI)),int(np.max(CHI))+1,int(CHI[1]-CHI[0]))
 N_gate_range = range(int(np.min(N)),int(np.max(N))+1,int(N[len(chi_range)]-N[0]))
@@ -40,7 +51,7 @@ fig.supylabel('Fidelity')
 for i in range(len(N.T[0])):
     axes[i].plot(MEM_tree[i],RES_tree[i],color = 'g',label = 'Tree')
     axes[i].plot(MEM_mps[i],RES_mps[i],color = 'r',label = 'Mps')
-    axes[i].plot(MEM_omps[i],RES_omps[i],color = 'b',label = 'Mps')
+    axes[i].plot(MEM_omps[i],RES_omps[i],color = 'b',label = 'oMps')
     axes[i].set_title('N='+str(int(N.T[0][i])))
 
 axes[-1].legend()
